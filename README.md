@@ -1,36 +1,136 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# gh-pr-reviewer
 
-## Getting Started
+`gh-pr-reviewer` is a Next.js app that reviews GitHub pull requests with OpenAI and streams the result back to the browser.
 
-First, run the development server:
+Paste a canonical GitHub PR URL, choose a review focus and mode, and the app will:
+
+- fetch PR metadata and changed files from GitHub
+- reject PRs that exceed the current MVP limits
+- stream review progress over Server-Sent Events
+- return a structured review with a summary, prioritized findings, test gaps, suggested fixes, and coverage metadata
+
+## What it does
+
+The UI is built around a single workflow:
+
+1. Paste a GitHub pull request URL.
+2. Preview the PR metadata.
+3. Run either a `fast` or `deep` review.
+4. Inspect streamed findings grouped by priority.
+
+Supported review focuses:
+
+- `general`
+- `bugs`
+- `security`
+- `tests`
+
+Supported review modes:
+
+- `fast`: quick pass for the highest-risk issues
+- `deep`: gathers more supporting context before reviewing
+
+## Requirements
+
+- Node.js 20+
+- A GitHub token in `GITHUB_TOKEN`
+- An OpenAI API key in `OPENAI_API_KEY`
+
+## Environment variables
+
+Create a local env file:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+cp .env.example .env.local
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Set the required values:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+GITHUB_TOKEN=your_github_token
+OPENAI_API_KEY=your_openai_api_key
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Optional model overrides:
 
-## Learn More
+```bash
+OPENAI_MODEL_FAST=gpt-5-mini
+OPENAI_MODEL_DEEP=gpt-5.3-codex
+```
 
-To learn more about Next.js, take a look at the following resources:
+Legacy fallback:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```bash
+OPENAI_MODEL=...
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Model selection works like this:
 
-## Deploy on Vercel
+- `OPENAI_MODEL_FAST` overrides the fast review model
+- `OPENAI_MODEL_DEEP` overrides the deep review model
+- `OPENAI_MODEL` is used as a legacy fallback
+- otherwise the app defaults to `gpt-5-mini` for fast mode and `gpt-5.3-codex` for deep mode
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Local development
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Install dependencies and start the dev server:
+
+```bash
+npm install
+npm run dev
+```
+
+Then open [http://localhost:3000](http://localhost:3000).
+
+## API
+
+### Preview endpoint
+
+`GET /api/review-preview/:owner/:repo/:prNumber`
+
+Returns basic PR metadata used by the landing page preview.
+
+### Review endpoint
+
+`GET /api/review/:owner/:repo/:prNumber?focus=general|bugs|security|tests&mode=fast|deep`
+
+Returns a `text/event-stream` response. The stream emits:
+
+- `stage`
+- `pr`
+- `comment`
+- `test_gap`
+- `suggested_fix`
+- `summary_delta`
+- `complete`
+- `error`
+
+Completed reviews are cached in-memory by `owner/repo/pr?focus=...&mode=...` for the lifetime of the server process.
+
+## Current limits
+
+The review pipeline currently rejects pull requests above these thresholds:
+
+- at most `18` changed files
+- at most `12` reviewable files after filtering
+- at most `900` changed lines
+- at most `60,000` diff characters
+
+Deep review also caps how much extra context it pulls in from the repository.
+
+## Notes
+
+- The URL parser only accepts canonical GitHub pull request URLs in the form `https://github.com/{owner}/{repo}/pull/{number}`.
+- The landing page currently labels the experience as `Public repos only`.
+- GitHub access is entirely determined by the configured token and the repository visibility/permissions behind it.
+- Cache storage is process-local and non-persistent.
+
+## Stack
+
+- Next.js App Router
+- React 19
+- TypeScript
+- Vercel AI SDK
+- OpenAI
+- Octokit
+- Tailwind CSS 4
