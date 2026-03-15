@@ -1,0 +1,27 @@
+src/lib/review.ts
+  3d3254759faae779 77-79,84-86,980,982-987,992,994-999,1004,1006-1011,1142-1144
+src/app/api/review/[owner]/[repo]/[prNumber]/route.ts
+  3d3254759faae779 17-19,36-38,171-173
+src/components/review/pr-review-generator.tsx
+  3d3254759faae779 24-26,176-177,185,190-191,199,204-205,213
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "d58f0d342f5d5134e295642d4e44c2e8c3f90e70",
+  "prompts": {
+    "3d3254759faae779": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019cf2d1-67f3-7ec3-9b21-2e2357533693",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Samaila Bala <samailabalap@gmail.com>",
+      "messages": [],
+      "total_additions": 51,
+      "total_deletions": 59,
+      "accepted_lines": 51,
+      "overriden_lines": 0
+    }
+  }
+}
