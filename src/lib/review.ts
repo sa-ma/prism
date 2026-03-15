@@ -74,16 +74,16 @@ type ReviewablePullRequest = {
 type ReviewCallbacks = {
   onStage?: (stage: StageEvent) => void;
   onSummaryDelta?: (delta: string) => void;
-  onComment?: (comment: Comment) => void;
-  onTestGap?: (testGap: TestGap) => void;
-  onSuggestedFix?: (suggestedFix: SuggestedFix) => void;
+  onCommentsSnapshot?: (comments: Comment[]) => void;
+  onTestGapsSnapshot?: (testGaps: TestGap[]) => void;
+  onSuggestedFixesSnapshot?: (suggestedFixes: SuggestedFix[]) => void;
 };
 
 type PartialStreamState = {
   summary: string;
-  comments: Set<string>;
-  testGaps: Set<string>;
-  suggestedFixes: Set<string>;
+  commentsSignature: string;
+  testGapsSignature: string;
+  suggestedFixesSignature: string;
 };
 
 type ReviewIssue = {
@@ -977,35 +977,38 @@ function emitPartialOutput(
   }
 
   if (Array.isArray(partial.comments)) {
-    for (const candidate of partial.comments) {
+    const comments = sortByPriority(dedupeById(partial.comments.flatMap((candidate) => {
       const comment = validateCommentCandidate(candidate);
-      if (!comment || state.comments.has(comment.id)) {
-        continue;
-      }
-      state.comments.add(comment.id);
-      callbacks.onComment?.(comment);
+      return comment ? [comment] : [];
+    })));
+    const signature = JSON.stringify(comments);
+    if (signature !== state.commentsSignature) {
+      state.commentsSignature = signature;
+      callbacks.onCommentsSnapshot?.(comments);
     }
   }
 
   if (Array.isArray(partial.testGaps)) {
-    for (const candidate of partial.testGaps) {
+    const testGaps = sortByPriority(dedupeById(partial.testGaps.flatMap((candidate) => {
       const testGap = validateTestGapCandidate(candidate);
-      if (!testGap || state.testGaps.has(testGap.id)) {
-        continue;
-      }
-      state.testGaps.add(testGap.id);
-      callbacks.onTestGap?.(testGap);
+      return testGap ? [testGap] : [];
+    })));
+    const signature = JSON.stringify(testGaps);
+    if (signature !== state.testGapsSignature) {
+      state.testGapsSignature = signature;
+      callbacks.onTestGapsSnapshot?.(testGaps);
     }
   }
 
   if (Array.isArray(partial.suggestedFixes)) {
-    for (const candidate of partial.suggestedFixes) {
+    const suggestedFixes = sortByPriority(dedupeById(partial.suggestedFixes.flatMap((candidate) => {
       const suggestedFix = validateSuggestedFixCandidate(candidate);
-      if (!suggestedFix || state.suggestedFixes.has(suggestedFix.id)) {
-        continue;
-      }
-      state.suggestedFixes.add(suggestedFix.id);
-      callbacks.onSuggestedFix?.(suggestedFix);
+      return suggestedFix ? [suggestedFix] : [];
+    })));
+    const signature = JSON.stringify(suggestedFixes);
+    if (signature !== state.suggestedFixesSignature) {
+      state.suggestedFixesSignature = signature;
+      callbacks.onSuggestedFixesSnapshot?.(suggestedFixes);
     }
   }
 }
@@ -1136,9 +1139,9 @@ async function runStructuredReview(
       if (streamPartials) {
         const state: PartialStreamState = {
           summary: "",
-          comments: new Set<string>(),
-          testGaps: new Set<string>(),
-          suggestedFixes: new Set<string>(),
+          commentsSignature: "",
+          testGapsSignature: "",
+          suggestedFixesSignature: "",
         };
 
         for await (const partial of result.partialOutputStream) {

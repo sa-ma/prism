@@ -21,9 +21,9 @@ import type {
 type StreamEventMap = {
   stage: StageEvent;
   pr: PullRequestSummary;
-  comment: Comment;
-  test_gap: TestGap;
-  suggested_fix: SuggestedFix;
+  comments_snapshot: Comment[];
+  test_gaps_snapshot: TestGap[];
+  suggested_fixes_snapshot: SuggestedFix[];
   summary_delta: { text: string };
   complete: CachedReview;
   error: ErrorEvent;
@@ -41,17 +41,6 @@ type GeneratorState =
     }
   | { status: "complete"; entry: CachedReview }
   | { status: "error"; error: ErrorEvent };
-
-function upsertById<T extends { id: string }>(items: T[], nextItem: T): T[] {
-  const index = items.findIndex((item) => item.id === nextItem.id);
-  if (index === -1) {
-    return [...items, nextItem];
-  }
-
-  const clone = [...items];
-  clone[index] = nextItem;
-  return clone;
-}
 
 function sortByPriority<T extends { priority: "high" | "medium" | "low" }>(items: T[]): T[] {
   const order = { high: 0, medium: 1, low: 2 };
@@ -184,8 +173,8 @@ export function PRReviewGenerator({
       });
     });
 
-    eventSource.addEventListener("comment", (event: MessageEvent) => {
-      const payload = JSON.parse(event.data) as StreamEventMap["comment"];
+    eventSource.addEventListener("comments_snapshot", (event: MessageEvent) => {
+      const payload = JSON.parse(event.data) as StreamEventMap["comments_snapshot"];
       setState((current) => {
         if (current.status !== "loading") {
           return current;
@@ -193,13 +182,13 @@ export function PRReviewGenerator({
 
         return {
           ...current,
-          comments: sortByPriority(upsertById(current.comments, payload)),
+          comments: sortByPriority(payload),
         };
       });
     });
 
-    eventSource.addEventListener("test_gap", (event: MessageEvent) => {
-      const payload = JSON.parse(event.data) as StreamEventMap["test_gap"];
+    eventSource.addEventListener("test_gaps_snapshot", (event: MessageEvent) => {
+      const payload = JSON.parse(event.data) as StreamEventMap["test_gaps_snapshot"];
       setState((current) => {
         if (current.status !== "loading") {
           return current;
@@ -207,13 +196,13 @@ export function PRReviewGenerator({
 
         return {
           ...current,
-          testGaps: sortByPriority(upsertById(current.testGaps, payload)),
+          testGaps: sortByPriority(payload),
         };
       });
     });
 
-    eventSource.addEventListener("suggested_fix", (event: MessageEvent) => {
-      const payload = JSON.parse(event.data) as StreamEventMap["suggested_fix"];
+    eventSource.addEventListener("suggested_fixes_snapshot", (event: MessageEvent) => {
+      const payload = JSON.parse(event.data) as StreamEventMap["suggested_fixes_snapshot"];
       setState((current) => {
         if (current.status !== "loading") {
           return current;
@@ -221,7 +210,7 @@ export function PRReviewGenerator({
 
         return {
           ...current,
-          suggestedFixes: sortByPriority(upsertById(current.suggestedFixes, payload)),
+          suggestedFixes: sortByPriority(payload),
         };
       });
     });
