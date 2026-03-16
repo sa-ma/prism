@@ -1,0 +1,63 @@
+src/app/globals.css
+  53be03ffbf217d47 10,51-82,90,95,125,129,141,143,157,169,172-222
+src/app/layout.tsx
+  53be03ffbf217d47 22,32
+  c73cec5e07390ef0 16
+src/components/home-page.tsx
+  53be03ffbf217d47 6,10-11,14-15,21,23-30,32,35-42,44,47-49,51,53-57,59,61,67-68
+  c73cec5e07390ef0 34
+src/components/home-page-form.tsx
+  53be03ffbf217d47 66,68-69,72-73,192,196,198-200,206,212,221,231,237,239,248,257,267,273,282,285-286,289,292,300,308-309,315,320,325-326,331,335,339,343,356-359,363,378-384,387-388,392
+src/components/ui/button.tsx
+  53be03ffbf217d47 9,13,15,17,19,21-22,27-28,31-32
+src/components/ui/input.tsx
+  53be03ffbf217d47 12
+src/components/ui/card.tsx
+  53be03ffbf217d47 15,28,40,50,84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "4bc787c58cb433eb91e343f033c04086e099a1c1",
+  "prompts": {
+    "3f4213a23b467a77": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019cf895-c509-7160-b57d-8ace62147d98",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Samaila Bala <samailabalap@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    },
+    "53be03ffbf217d47": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019cf7ed-eff3-7e52-af5c-766e74f38de7",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Samaila Bala <samailabalap@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 199,
+      "overriden_lines": 0
+    },
+    "c73cec5e07390ef0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019cf896-9284-7601-9d78-53df6b8c898d",
+        "model": "unknown"
+      },
+      "human_author": "Samaila Bala <samailabalap@gmail.com>",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
