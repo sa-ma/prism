@@ -42,19 +42,6 @@ const baseCommentSchema = z.object({
   suggestedFix: z.string().min(1).nullable(),
 }).merge(findingMetaSchema);
 
-const baseTestGapSchema = z.object({
-  priority: prioritySchema,
-  file: z.string().min(1).nullable(),
-  gap: z.string().min(1),
-  whyItMatters: z.string().min(1),
-}).merge(findingMetaSchema);
-
-const baseSuggestedFixSchema = z.object({
-  priority: prioritySchema,
-  file: z.string().min(1).nullable(),
-  suggestion: z.string().min(1),
-}).merge(findingMetaSchema);
-
 const riskAssessmentSchema = z.object({
   level: prioritySchema,
   reasons: z.array(z.string().min(1)),
@@ -63,22 +50,12 @@ const riskAssessmentSchema = z.object({
 export const modelReviewSchema = z.object({
   summary: z.string(),
   comments: z.array(baseCommentSchema),
-  testGaps: z.array(baseTestGapSchema),
-  suggestedFixes: z.array(baseSuggestedFixSchema),
   riskAssessment: riskAssessmentSchema,
 });
 
 export const commentSchema = baseCommentSchema.extend({
   id: z.string().min(1),
   diffContext: diffContextSchema.nullable(),
-});
-
-export const testGapSchema = baseTestGapSchema.extend({
-  id: z.string().min(1),
-});
-
-export const suggestedFixSchema = baseSuggestedFixSchema.extend({
-  id: z.string().min(1),
 });
 
 export const groupedCommentsSchema = z.object({
@@ -90,8 +67,6 @@ export const groupedCommentsSchema = z.object({
 export const finalReviewSchema = z.object({
   summary: z.string(),
   commentsByPriority: groupedCommentsSchema,
-  testGaps: z.array(testGapSchema),
-  suggestedFixes: z.array(suggestedFixSchema),
   riskAssessment: riskAssessmentSchema,
   coverage: z.object({
     mode: reviewModeSchema,
@@ -113,8 +88,6 @@ export type ReviewFocus = z.infer<typeof reviewFocusSchema>;
 export type ReviewMode = z.infer<typeof reviewModeSchema>;
 export type ModelReview = z.infer<typeof modelReviewSchema>;
 export type Comment = z.infer<typeof commentSchema>;
-export type TestGap = z.infer<typeof testGapSchema>;
-export type SuggestedFix = z.infer<typeof suggestedFixSchema>;
 export type FinalReview = z.infer<typeof finalReviewSchema>;
 export type RiskAssessment = z.infer<typeof riskAssessmentSchema>;
 

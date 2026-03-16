@@ -15,8 +15,6 @@ type StreamWriter = {
   stage: (payload: StageEvent) => void;
   pr: (payload: PullRequestSummary) => void;
   commentsSnapshot: (payload: Array<FinalReview["commentsByPriority"]["high"][number]>) => void;
-  testGapsSnapshot: (payload: FinalReview["testGaps"]) => void;
-  suggestedFixesSnapshot: (payload: FinalReview["suggestedFixes"]) => void;
   summaryDelta: (payload: { text: string }) => void;
   complete: (payload: CachedReview) => void;
   error: (payload: ErrorEvent) => void;
@@ -34,8 +32,6 @@ function createWriter(controller: ReadableStreamDefaultController<Uint8Array>): 
     stage: (payload) => write("stage", payload),
     pr: (payload) => write("pr", payload),
     commentsSnapshot: (payload) => write("comments_snapshot", payload),
-    testGapsSnapshot: (payload) => write("test_gaps_snapshot", payload),
-    suggestedFixesSnapshot: (payload) => write("suggested_fixes_snapshot", payload),
     summaryDelta: (payload) => write("summary_delta", payload),
     complete: (payload) => write("complete", payload),
     error: (payload) => write("error", payload),
@@ -169,8 +165,6 @@ export async function GET(
             onStage: (stage) => writer.stage(stage),
             onSummaryDelta: (delta) => writer.summaryDelta({ text: delta }),
             onCommentsSnapshot: (comments) => writer.commentsSnapshot(comments),
-            onTestGapsSnapshot: (testGaps) => writer.testGapsSnapshot(testGaps),
-            onSuggestedFixesSnapshot: (suggestedFixes) => writer.suggestedFixesSnapshot(suggestedFixes),
           },
           request.signal,
         );

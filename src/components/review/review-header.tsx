@@ -2,38 +2,37 @@ import Link from "next/link";
 
 type ReviewHeaderProps = {
   subtitle?: string;
+  subtitleHref?: string;
 };
 
-export function ReviewHeader({ subtitle }: ReviewHeaderProps) {
+export function ReviewHeader({ subtitle, subtitleHref }: ReviewHeaderProps) {
   return (
-    <header className="flex h-14 shrink-0 items-center gap-3 border-b border-border/60 bg-background/70 px-4 backdrop-blur md:px-6">
-      <Link
-        href="/"
-        className="font-ui flex items-center gap-2 text-sm font-medium text-secondary-foreground transition-colors hover:text-foreground"
-      >
-        <svg
-          width="16"
-          height="16"
-          viewBox="0 0 20 20"
-          fill="none"
-          className="text-primary"
-          aria-hidden="true"
-        >
-          <path
-            d="M3 4h14M3 8h10M3 12h12M3 16h8"
-            stroke="currentColor"
-            strokeWidth="1.5"
-            strokeLinecap="round"
-          />
-        </svg>
-        PR Reviewer
-      </Link>
-      {subtitle ? (
-        <>
-          <span className="text-muted-foreground/30">/</span>
-          <span className="font-mono text-xs text-muted-foreground md:text-sm">{subtitle}</span>
-        </>
-      ) : null}
+    <header className="border-b border-border px-8 py-4 md:px-12 md:py-5">
+      <div className="font-ui flex flex-wrap items-center gap-2 text-lg leading-none tracking-[0.01em] md:text-xl">
+        <Link href="/" className="text-foreground">
+          <span className="font-extrabold">PR</span>
+          <span className="font-medium text-zinc-300">ISM</span>
+        </Link>
+        {subtitle ? (
+          <>
+            <span className="text-muted-foreground">/</span>
+            {subtitleHref ? (
+              <a
+                href={subtitleHref}
+                target="_blank"
+                rel="noreferrer"
+                className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:text-foreground md:text-xs"
+              >
+                {subtitle}
+              </a>
+            ) : (
+              <div className="text-[11px] uppercase tracking-[0.16em] text-muted-foreground md:text-xs">
+                {subtitle}
+              </div>
+            )}
+          </>
+        ) : null}
+      </div>
     </header>
   );
 }

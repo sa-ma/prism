@@ -63,14 +63,16 @@ function OptionPill({
       type="button"
       onClick={onClick}
       aria-pressed={selected}
-      className={`rounded-2xl border px-4 py-3 text-left transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 ${
+      className={`flex h-full flex-col border px-3 py-3 text-left transition-colors focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30 ${
         selected
-          ? "border-primary/35 bg-primary/12 text-foreground shadow-[inset_0_0_0_1px_rgba(var(--signal-rgb),0.22)]"
-          : "border-border/80 bg-secondary/35 text-secondary-foreground hover:border-primary/25 hover:text-foreground"
+          ? "border-foreground bg-accent text-foreground"
+          : "border-border bg-background text-secondary-foreground hover:bg-muted hover:text-foreground"
       }`}
     >
-      <div className="font-ui text-sm font-medium">{title}</div>
-      <div className="mt-1 text-sm leading-6 text-muted-foreground">{description}</div>
+      <div className="font-ui text-xs font-medium uppercase tracking-[0.12em]">{title}</div>
+      <div className="font-ui mt-2 flex-1 text-sm leading-6 tracking-[-0.02em] text-muted-foreground">
+        {description}
+      </div>
     </button>
   );
 }
@@ -187,29 +189,27 @@ export function HomePageForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <section className="space-y-4">
-        <div className="flex flex-col gap-2 md:flex-row md:items-end md:justify-between">
-          <div className="space-y-1 text-left">
-            <div className="font-ui text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              Start with the PR
-            </div>
-            <h2 className="font-ui text-xl font-semibold tracking-tight text-foreground md:text-2xl">
-              Paste the URL
-            </h2>
+        <div className="space-y-1 text-left">
+          <div className="font-ui text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+            Review input
           </div>
+          <h2 className="font-ui text-lg font-semibold tracking-tight text-foreground md:text-xl">
+            Paste the PR URL
+          </h2>
         </div>
 
         <div className="relative">
           <label
             htmlFor="pr-url"
-            className="mb-2 block text-left font-ui text-sm font-medium text-foreground"
+            className="mb-2 block text-left font-ui text-[11px] font-medium uppercase tracking-[0.16em] text-muted-foreground"
           >
             GitHub Pull Request URL
           </label>
           <Github
             aria-hidden="true"
-            className="absolute left-3 top-[calc(50%+0.875rem)] h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
+            className="absolute top-[calc(50%+0.875rem)] left-3 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground"
           />
           <Input
             id="pr-url"
@@ -218,7 +218,7 @@ export function HomePageForm() {
             inputMode="url"
             autoComplete="off"
             spellCheck={false}
-            placeholder="https://github.com/org/repo/pull/123…"
+            placeholder="https://github.com/org/repo/pull/123"
             value={prUrl}
             aria-describedby="pr-url-help pr-url-status"
             aria-invalid={hasInvalidUrl || Boolean(error)}
@@ -228,15 +228,15 @@ export function HomePageForm() {
                 setError("");
               }
             }}
-            className="h-12 rounded-xl bg-secondary/70 pl-9 text-sm placeholder:text-muted-foreground/60"
+            className="h-[52px] pl-9 text-sm placeholder:text-muted-foreground/60 md:text-[15px]"
           />
         </div>
 
-        <div id="pr-url-help" className="flex flex-wrap items-center gap-3 text-sm text-muted-foreground">
-          <span>Example: https://github.com/org/repo/pull/123</span>
-          <span className="rounded-full border border-border bg-secondary/70 px-2.5 py-1 text-[11px] uppercase tracking-[0.14em]">
-            Public repos only
-          </span>
+        <div
+          id="pr-url-help"
+          className="flex flex-wrap items-center gap-3 text-[11px] uppercase tracking-[0.14em] text-muted-foreground"
+        >
+          <span className="font-ui border border-border bg-muted px-2 py-1">Public repos only</span>
         </div>
 
         <div id="pr-url-status" aria-live="polite" aria-atomic="true" className="sr-only">
@@ -245,23 +245,16 @@ export function HomePageForm() {
 
         {hasInvalidUrl ? (
           <div
-            className="rounded-xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive"
+            className="font-ui border border-border bg-muted px-4 py-3 text-sm leading-6 tracking-[-0.02em] text-foreground"
             aria-live="polite"
           >
-            That URL does not parse as a GitHub pull request. Use the full
-            {" "}
-            <code>https://github.com/owner/repo/pull/123</code>
-            {" "}
-            form.
+            That URL does not parse as a GitHub pull request. Use the full{" "}
+            <code>https://github.com/owner/repo/pull/123</code> form.
           </div>
         ) : null}
 
         {target ? (
-          <div
-            className="rounded-2xl border border-primary/18 bg-[linear-gradient(180deg,rgba(var(--signal-rgb),0.1),rgba(23,28,29,0.72))] p-4 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.02)]"
-            aria-live="polite"
-            aria-busy={currentPreviewState.status === "loading"}
-          >
+          <div className="border border-border bg-muted p-4" aria-live="polite" aria-busy={currentPreviewState.status === "loading"}>
             <div className="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
               <div className="space-y-1.5">
                 <div className="font-ui text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
@@ -271,32 +264,32 @@ export function HomePageForm() {
                       ? "Preview ready"
                       : "PR detected"}
                 </div>
-                <div className="font-mono text-sm text-foreground">
+                <div className="font-ui text-sm tracking-[-0.02em] text-foreground">
                   {target.owner}/{target.repo} #{target.prNumber}
                 </div>
               </div>
 
               {currentPreviewState.status === "loading" ? (
-                <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/10 px-3 py-1 text-xs text-primary">
+                <div className="inline-flex items-center gap-2 border border-border bg-background px-3 py-1 text-[11px] uppercase tracking-[0.14em] text-foreground">
                   <Loader2 aria-hidden="true" className="h-3.5 w-3.5 animate-spin motion-reduce:animate-none" />
-                  Fetching metadata…
+                  Fetching metadata
                 </div>
               ) : null}
             </div>
 
             {currentPreviewState.status === "ready" ? (
               <div className="mt-4 space-y-3">
-                <div className="text-[17px] leading-7 text-foreground">
+                <div className="font-ui text-[15px] leading-7 tracking-[-0.02em] text-foreground">
                   {currentPreviewState.preview.title}
                 </div>
-                <div className="flex flex-wrap gap-2 text-xs text-muted-foreground">
-                  <span className="rounded-full border border-border bg-card px-3 py-1">
+                <div className="flex flex-wrap gap-2 text-[11px] uppercase tracking-[0.14em] text-muted-foreground">
+                  <span className="border border-border bg-background px-2.5 py-1">
                     Author {currentPreviewState.preview.author}
                   </span>
-                  <span className="rounded-full border border-border bg-card px-3 py-1">
+                  <span className="border border-border bg-background px-2.5 py-1">
                     Files {currentPreviewState.preview.changedFiles}
                   </span>
-                  <span className="rounded-full border border-border bg-card px-3 py-1 tabular-nums">
+                  <span className="border border-border bg-background px-2.5 py-1 tabular-nums">
                     Lines +{currentPreviewState.preview.additions} -{currentPreviewState.preview.deletions}
                   </span>
                 </div>
@@ -304,98 +297,104 @@ export function HomePageForm() {
             ) : null}
 
             {currentPreviewState.status === "error" ? (
-              <div className="mt-3 text-sm text-destructive">{currentPreviewState.message}</div>
+              <div className="font-ui mt-3 text-sm leading-6 tracking-[-0.02em] text-foreground">
+                {currentPreviewState.message}
+              </div>
             ) : null}
           </div>
         ) : null}
       </section>
 
-      <section className="flex flex-col gap-3 border-t border-border/70 pt-5 md:flex-row md:items-center md:justify-between">
-        <div className="flex flex-wrap items-center gap-2 text-sm text-secondary-foreground">
+      <section className="flex flex-col gap-3 border-t border-border pt-4">
+        <div className="font-ui flex flex-wrap items-center gap-2 text-[11px] uppercase tracking-[0.14em] text-secondary-foreground">
           <button
             type="button"
             aria-expanded={showAdvancedOptions}
             aria-controls="advanced-review-settings"
             onClick={() => setShowAdvancedOptions((current) => !current)}
-            className="inline-flex items-center gap-2 rounded-full border border-border bg-secondary/45 px-3 py-1.5 font-ui text-[11px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:border-primary/25 hover:text-foreground focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
+            className="inline-flex items-center gap-2 border border-border bg-background px-3 py-1.5 font-ui text-[11px] uppercase tracking-[0.16em] text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/30"
           >
             {showAdvancedOptions ? "Hide advanced settings" : "Refine review"}
           </button>
           <span>
-            Default mode is <span className="text-foreground">general</span> and <span className="text-foreground">fast</span>.
+            Default mode is <span className="text-foreground">general</span> and{" "}
+            <span className="text-foreground">fast</span>.
           </span>
         </div>
 
+        {showAdvancedOptions ? (
+          <section id="advanced-review-settings" className="border border-border bg-background p-4 md:p-5">
+            <div className="mb-4 flex flex-col gap-1 text-left">
+              <div className="font-ui text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
+                Review settings
+              </div>
+              <h3 className="font-ui text-base font-medium tracking-[-0.02em] text-foreground">
+                Adjust focus or depth when the default pass is not enough.
+              </h3>
+            </div>
+
+            <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)]">
+              <div className="space-y-3">
+                <div className="font-ui text-sm text-foreground">Focus</div>
+                <div className="grid gap-2 sm:grid-cols-2">
+                  {reviewFocusOptions.map((option) => {
+                    const value = normalizeReviewFocus(option.value);
+                    const selected = value === focus;
+
+                    return (
+                      <OptionPill
+                        key={option.value}
+                        selected={selected}
+                        title={option.label}
+                        description={focusDescriptions[value]}
+                        onClick={() => setFocus(value)}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <div className="font-ui text-sm text-foreground">Depth</div>
+                <div className="grid gap-2">
+                  {reviewModeOptions.map((option) => {
+                    const value = normalizeReviewMode(option.value);
+                    const selected = value === mode;
+
+                    return (
+                      <OptionPill
+                        key={option.value}
+                        selected={selected}
+                        title={option.label}
+                        description={modeDescriptions[value]}
+                        onClick={() => setMode(value)}
+                      />
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          </section>
+        ) : null}
+      </section>
+
+      <div className="flex flex-col gap-3 border-t border-border pt-4 md:flex-row md:items-center md:justify-between">
+        <p className="font-ui text-sm leading-6 tracking-[-0.02em] text-muted-foreground">
+          The review opens in a dedicated workspace with staged progress and cached results.
+        </p>
+
         <div className="flex flex-col items-stretch gap-2 md:min-w-60">
-          <Button type="submit" size="lg" className="h-11 rounded-xl shadow-[0_10px_24px_rgba(var(--signal-rgb),0.2)]">
-            Start Review
+          <Button type="submit" size="lg" className="h-11">
+            Start review
             <ArrowRight aria-hidden="true" className="ml-1.5 h-3.5 w-3.5" />
           </Button>
           {error ? (
-            <p className="text-xs text-destructive" aria-live="polite">
+            <p className="text-xs text-foreground" aria-live="polite">
               {error}
             </p>
           ) : null}
         </div>
-      </section>
-
-      {showAdvancedOptions ? (
-        <section
-          id="advanced-review-settings"
-          className="rounded-2xl border border-border/70 bg-secondary/20 p-4 md:p-5"
-        >
-          <div className="mb-4 flex flex-col gap-1 text-left">
-            <div className="font-ui text-[11px] uppercase tracking-[0.18em] text-muted-foreground">
-              Review settings
-            </div>
-            <h3 className="font-ui text-base font-medium text-foreground">
-              Adjust focus or depth when the default pass is not enough.
-            </h3>
-          </div>
-
-          <div className="grid gap-5 lg:grid-cols-[minmax(0,1.35fr)_minmax(0,0.9fr)]">
-            <div className="space-y-3">
-              <div className="font-ui text-sm text-foreground">Focus</div>
-              <div className="grid gap-3 sm:grid-cols-2">
-                {reviewFocusOptions.map((option) => {
-                  const value = normalizeReviewFocus(option.value);
-                  const selected = value === focus;
-
-                  return (
-                    <OptionPill
-                      key={option.value}
-                      selected={selected}
-                      title={option.label}
-                      description={focusDescriptions[value]}
-                      onClick={() => setFocus(value)}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-
-            <div className="space-y-3">
-              <div className="font-ui text-sm text-foreground">Depth</div>
-              <div className="grid gap-3">
-                {reviewModeOptions.map((option) => {
-                  const value = normalizeReviewMode(option.value);
-                  const selected = value === mode;
-
-                  return (
-                    <OptionPill
-                      key={option.value}
-                      selected={selected}
-                      title={option.label}
-                      description={modeDescriptions[value]}
-                      onClick={() => setMode(value)}
-                    />
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-        </section>
-      ) : null}
+      </div>
     </form>
   );
 }

@@ -14,16 +14,12 @@ import type {
   ReviewFocus,
   ReviewMode,
   StageEvent,
-  SuggestedFix,
-  TestGap,
 } from "@/lib/review-types";
 
 type StreamEventMap = {
   stage: StageEvent;
   pr: PullRequestSummary;
   comments_snapshot: Comment[];
-  test_gaps_snapshot: TestGap[];
-  suggested_fixes_snapshot: SuggestedFix[];
   summary_delta: { text: string };
   complete: CachedReview;
   error: ErrorEvent;
@@ -36,8 +32,6 @@ type GeneratorState =
       pr: PullRequestSummary | null;
       summary: string;
       comments: Comment[];
-      testGaps: TestGap[];
-      suggestedFixes: SuggestedFix[];
     }
   | { status: "complete"; entry: CachedReview }
   | { status: "error"; error: ErrorEvent };
@@ -75,8 +69,6 @@ function buildIncrementalEntry(
         medium: state.comments.filter((comment) => comment.priority === "medium"),
         low: state.comments.filter((comment) => comment.priority === "low"),
       },
-      testGaps: state.testGaps,
-      suggestedFixes: state.suggestedFixes,
       riskAssessment: {
         level: "medium",
         reasons: [],
@@ -118,8 +110,6 @@ export function PRReviewGenerator({
     pr: null,
     summary: "",
     comments: [],
-    testGaps: [],
-    suggestedFixes: [],
   });
   const eventSourceRef = useRef<EventSource | null>(null);
 
@@ -187,34 +177,6 @@ export function PRReviewGenerator({
       });
     });
 
-    eventSource.addEventListener("test_gaps_snapshot", (event: MessageEvent) => {
-      const payload = JSON.parse(event.data) as StreamEventMap["test_gaps_snapshot"];
-      setState((current) => {
-        if (current.status !== "loading") {
-          return current;
-        }
-
-        return {
-          ...current,
-          testGaps: sortByPriority(payload),
-        };
-      });
-    });
-
-    eventSource.addEventListener("suggested_fixes_snapshot", (event: MessageEvent) => {
-      const payload = JSON.parse(event.data) as StreamEventMap["suggested_fixes_snapshot"];
-      setState((current) => {
-        if (current.status !== "loading") {
-          return current;
-        }
-
-        return {
-          ...current,
-          suggestedFixes: sortByPriority(payload),
-        };
-      });
-    });
-
     eventSource.addEventListener("complete", (event: MessageEvent) => {
       const payload = JSON.parse(event.data) as StreamEventMap["complete"];
       setState({
@@ -255,8 +217,6 @@ export function PRReviewGenerator({
       pr: null,
       summary: "",
       comments: [],
-      testGaps: [],
-      suggestedFixes: [],
     });
     startConnection();
   }

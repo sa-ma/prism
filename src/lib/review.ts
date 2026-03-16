@@ -17,8 +17,6 @@ import {
   finalReviewSchema,
   modelReviewSchema,
   prioritySchema,
-  suggestedFixSchema,
-  testGapSchema,
   type Comment,
   type FinalReview,
   type ModelReview,
@@ -26,8 +24,6 @@ import {
   type ReviewFocus,
   type ReviewMode,
   type StageEvent,
-  type SuggestedFix,
-  type TestGap,
 } from "@/lib/review-types";
 
 const MAX_CHANGED_FILES = 18;
@@ -75,15 +71,11 @@ type ReviewCallbacks = {
   onStage?: (stage: StageEvent) => void;
   onSummaryDelta?: (delta: string) => void;
   onCommentsSnapshot?: (comments: Comment[]) => void;
-  onTestGapsSnapshot?: (testGaps: TestGap[]) => void;
-  onSuggestedFixesSnapshot?: (suggestedFixes: SuggestedFix[]) => void;
 };
 
 type PartialStreamState = {
   summary: string;
   commentsSignature: string;
-  testGapsSignature: string;
-  suggestedFixesSignature: string;
 };
 
 type ReviewIssue = {
@@ -136,23 +128,6 @@ function toCommentId(value: Omit<Comment, "id" | "diffContext">): string {
     normalizeWhitespace(value.file),
     normalizeWhitespace(value.title),
     normalizeWhitespace(value.explanation),
-  ]);
-}
-
-function toTestGapId(value: Omit<TestGap, "id">): string {
-  return createStableId("testgap", [
-    value.priority,
-    normalizeWhitespace(value.file),
-    normalizeWhitespace(value.gap),
-    normalizeWhitespace(value.whyItMatters),
-  ]);
-}
-
-function toSuggestedFixId(value: Omit<SuggestedFix, "id">): string {
-  return createStableId("fix", [
-    value.priority,
-    normalizeWhitespace(value.file),
-    normalizeWhitespace(value.suggestion),
   ]);
 }
 
@@ -251,87 +226,6 @@ function validateCommentCandidate(candidate: unknown): Comment | null {
     id: toCommentId(value),
     ...value,
     diffContext: null,
-  });
-}
-
-function validateTestGapCandidate(candidate: unknown): TestGap | null {
-  if (!candidate || typeof candidate !== "object") {
-    return null;
-  }
-
-  const parsedPriority = prioritySchema.safeParse((candidate as { priority?: unknown }).priority);
-  const gap =
-    typeof (candidate as { gap?: unknown }).gap === "string"
-      ? (candidate as { gap: string }).gap.trim()
-      : "";
-  const whyItMatters =
-    typeof (candidate as { whyItMatters?: unknown }).whyItMatters === "string"
-      ? (candidate as { whyItMatters: string }).whyItMatters.trim()
-      : "";
-  const file =
-    typeof (candidate as { file?: unknown }).file === "string"
-      ? (candidate as { file: string }).file.trim()
-      : null;
-  const assumption =
-    typeof (candidate as { assumption?: unknown }).assumption === "string"
-      ? (candidate as { assumption: string }).assumption.trim()
-      : null;
-
-  if (!parsedPriority.success || !gap || !whyItMatters) {
-    return null;
-  }
-
-  const value = {
-    priority: parsedPriority.data,
-    confidence: parseConfidenceCandidate((candidate as { confidence?: unknown }).confidence),
-    file: file || null,
-    gap,
-    whyItMatters,
-    assumption: assumption || null,
-    evidence: parseEvidenceCandidate((candidate as { evidence?: unknown }).evidence),
-  };
-
-  return testGapSchema.parse({
-    id: toTestGapId(value),
-    ...value,
-  });
-}
-
-function validateSuggestedFixCandidate(candidate: unknown): SuggestedFix | null {
-  if (!candidate || typeof candidate !== "object") {
-    return null;
-  }
-
-  const parsedPriority = prioritySchema.safeParse((candidate as { priority?: unknown }).priority);
-  const suggestion =
-    typeof (candidate as { suggestion?: unknown }).suggestion === "string"
-      ? (candidate as { suggestion: string }).suggestion.trim()
-      : "";
-  const file =
-    typeof (candidate as { file?: unknown }).file === "string"
-      ? (candidate as { file: string }).file.trim()
-      : null;
-  const assumption =
-    typeof (candidate as { assumption?: unknown }).assumption === "string"
-      ? (candidate as { assumption: string }).assumption.trim()
-      : null;
-
-  if (!parsedPriority.success || !suggestion) {
-    return null;
-  }
-
-  const value = {
-    priority: parsedPriority.data,
-    confidence: parseConfidenceCandidate((candidate as { confidence?: unknown }).confidence),
-    file: file || null,
-    suggestion,
-    assumption: assumption || null,
-    evidence: parseEvidenceCandidate((candidate as { evidence?: unknown }).evidence),
-  };
-
-  return suggestedFixSchema.parse({
-    id: toSuggestedFixId(value),
-    ...value,
   });
 }
 
@@ -568,10 +462,13 @@ function buildFastPrompt(pr: PullRequestData, reviewableFiles: PullRequestFile[]
     "Prioritize correctness, regressions, security issues, and missing tests.",
     "Do not produce style-only feedback.",
     focusInstruction(focus),
-    "Assign every comment, test gap, and suggested fix a required priority of high, medium, or low.",
-    "Assign each item a confidence of high, medium, or low.",
-    "Include 1-3 short evidence references per item using the supplied diff.",
-    "Use assumption only when a claim is an informed inference rather than directly proven.",
+    "Return findings only in the comments array.",
+    "Represent missing tests or concrete follow-up work as findings, not separate categories.",
+    "Assign every finding a required priority of high, medium, or low.",
+    "Assign each finding a confidence of high, medium, or low.",
+    "Include 1-3 short evidence references per finding using the supplied diff.",
+    "Use suggestedFix on a finding when a concrete remediation is clear.",
+    "Use assumption only when a finding is an informed inference rather than directly proven.",
     "Keep the summary concise and execution-oriented.",
     "Provide a short risk assessment with a low, medium, or high level and concrete reasons.",
     "",
@@ -599,7 +496,9 @@ function buildDeepReviewPrompt(
     "Do not produce style-only feedback.",
     focusInstruction(focus),
     "Prefer dropping weak or speculative findings over mentioning them.",
-    "Every item must include priority, confidence, optional assumption, and 1-3 evidence references.",
+    "Return findings only in the comments array.",
+    "Represent missing tests or concrete follow-up work as findings, not separate categories.",
+    "Every finding must include priority, confidence, optional assumption, and 1-3 evidence references.",
     "Evidence must cite only the supplied diff, repository context, or linked issue context.",
     "Keep the summary concise and execution-oriented.",
     "Provide a short risk assessment with a low, medium, or high level and concrete reasons.",
@@ -959,8 +858,6 @@ function emitPartialOutput(
   partial: {
     summary?: string;
     comments?: Array<unknown>;
-    testGaps?: Array<unknown>;
-    suggestedFixes?: Array<unknown>;
   },
   state: PartialStreamState,
   callbacks: ReviewCallbacks,
@@ -985,30 +882,6 @@ function emitPartialOutput(
     if (signature !== state.commentsSignature) {
       state.commentsSignature = signature;
       callbacks.onCommentsSnapshot?.(comments);
-    }
-  }
-
-  if (Array.isArray(partial.testGaps)) {
-    const testGaps = sortByPriority(dedupeById(partial.testGaps.flatMap((candidate) => {
-      const testGap = validateTestGapCandidate(candidate);
-      return testGap ? [testGap] : [];
-    })));
-    const signature = JSON.stringify(testGaps);
-    if (signature !== state.testGapsSignature) {
-      state.testGapsSignature = signature;
-      callbacks.onTestGapsSnapshot?.(testGaps);
-    }
-  }
-
-  if (Array.isArray(partial.suggestedFixes)) {
-    const suggestedFixes = sortByPriority(dedupeById(partial.suggestedFixes.flatMap((candidate) => {
-      const suggestedFix = validateSuggestedFixCandidate(candidate);
-      return suggestedFix ? [suggestedFix] : [];
-    })));
-    const signature = JSON.stringify(suggestedFixes);
-    if (signature !== state.suggestedFixesSignature) {
-      state.suggestedFixesSignature = signature;
-      callbacks.onSuggestedFixesSnapshot?.(suggestedFixes);
     }
   }
 }
@@ -1056,38 +929,6 @@ function finalizeReview(reviewable: ReviewablePullRequest, output: ModelReview):
     ),
   );
 
-  const testGaps = sortByPriority(
-    dedupeById(
-      output.testGaps.map((testGap) =>
-        testGapSchema.parse({
-          id: toTestGapId(testGap),
-          ...testGap,
-          evidence: backfillEvidence(
-            testGap.evidence,
-            testGap.file ? reviewableFileByName.get(testGap.file) : undefined,
-            testGap.file,
-          ),
-        }),
-      ),
-    ),
-  );
-
-  const suggestedFixes = sortByPriority(
-    dedupeById(
-      output.suggestedFixes.map((suggestedFix) =>
-        suggestedFixSchema.parse({
-          id: toSuggestedFixId(suggestedFix),
-          ...suggestedFix,
-          evidence: backfillEvidence(
-            suggestedFix.evidence,
-            suggestedFix.file ? reviewableFileByName.get(suggestedFix.file) : undefined,
-            suggestedFix.file,
-          ),
-        }),
-      ),
-    ),
-  );
-
   return finalReviewSchema.parse({
     summary: output.summary.trim(),
     commentsByPriority: {
@@ -1095,8 +936,6 @@ function finalizeReview(reviewable: ReviewablePullRequest, output: ModelReview):
       medium: comments.filter((comment) => comment.priority === "medium"),
       low: comments.filter((comment) => comment.priority === "low"),
     },
-    testGaps,
-    suggestedFixes,
     riskAssessment: output.riskAssessment,
     coverage: {
       mode: reviewable.reviewMode,
@@ -1140,8 +979,6 @@ async function runStructuredReview(
         const state: PartialStreamState = {
           summary: "",
           commentsSignature: "",
-          testGapsSignature: "",
-          suggestedFixesSignature: "",
         };
 
         for await (const partial of result.partialOutputStream) {
